@@ -3,5 +3,8 @@
 **/__pycache__
 build
 dist
+
+# Reference-only ESB sample app (separate repo, not part of this module)
+esb-python-sample-project/
 *.egg-info
 .idea

@@ -23,7 +23,11 @@ setup(
         'django',
         'django-db-signals',
         'djangorestframework',
-        'openimis-be-core'
+        'celery',
+        'openimis-be-core',
+        'openimis-be-payroll',
+        'openimis-be-tasaf_payment',
+        'openimis-be-coremis_app_integration',  # shared GovESB transport (esb_client + GovESBProducer)
     ],
     classifiers=[
         'Environment :: Web Environment',
