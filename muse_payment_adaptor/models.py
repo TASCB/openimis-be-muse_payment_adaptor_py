@@ -10,25 +10,25 @@ class MuseTransactionStatus(models.TextChoices):
     FAILED    = 'FAILED',    _('Failed')
     RETRYING  = 'RETRYING',  _('Retrying')
     REJECTED  = 'REJECTED',  _('Rejected by Gateway')
+    UNKNOWN   = 'UNKNOWN',   _('Outcome unknown')
+    NOT_SENT  = 'NOT_SENT',  _('Recorded without sending')
 
 
 class MuseTransactionType(models.TextChoices):
-    PAYMENT        = 'PAYMENT',        _('Payment')
-    RECONCILIATION = 'RECONCILIATION', _('Reconciliation')
+    BULK_PAYMENT   = 'BULK_PAYMENT',   _('Bulk payment message')
+    ACK            = 'ACK',            _('Acknowledgement')
+    RESPONSE       = 'RESPONSE',       _('Batch response')
+    PAYMENT_STATUS = 'PAYMENT_STATUS', _('Payment status')
 
 
 class MuseTransactionLog(models.Model):
     """
-    Immutable audit log for every HTTP call made to the MUSE payment gateway.
+    Audit log of every message exchanged with MUSE: one row per outbound BULK_PAYMENT
+    attempt (tasaf_payment.muse_sender) and one per inbound ACK / RESPONSE /
+    PAYMENT_STATUS (tasaf_payment.muse_inbound). Never deleted.
 
-    One record is written per API attempt (including retries).  Never update
-    or soft-delete records — this is a compliance audit trail.  Use
-    status=RETRYING to mark transient failures that will be retried, then
-    write a fresh SUCCESS/FAILED record for the final outcome.
-
-    payroll_id and benefit_code are plain CharField references (not FK) so
-    this table can be read independently and remains intact even if the
-    related payroll is later deleted.
+    References are plain strings (msg_id, batch_reference, paylist_uuid, benefit_code),
+    not foreign keys, so the log stays intact whatever happens to the rows it describes.
     """
 
     id = models.BigAutoField(primary_key=True)
@@ -47,11 +47,15 @@ class MuseTransactionLog(models.Model):
     )
 
     # References — stored as plain strings for independence
-    payroll_id = models.IntegerField(null=True, blank=True, db_index=True)
-    benefit_code = models.CharField(max_length=255, db_index=True)
-    account_number = models.CharField(max_length=50, blank=True, null=True)
-    fsp_name = models.CharField(max_length=100, blank=True, null=True)
-    fsp_type = models.CharField(max_length=20, blank=True, null=True)
+    benefit_code = models.CharField(max_length=255, db_index=True, blank=True, default='')
+
+    # One row per message (outbound attempt or inbound message), not per payment.
+    direction = models.CharField(max_length=3, default='OUT')
+    msg_id = models.CharField(max_length=32, blank=True, default='', db_index=True)
+    batch_reference = models.CharField(max_length=100, blank=True, default='')
+    paylist_uuid = models.CharField(max_length=36, blank=True, default='', db_index=True)
+    item_count = models.IntegerField(null=True, blank=True)
+    esb_request_id = models.CharField(max_length=100, blank=True, default='')
     amount = models.DecimalField(max_digits=18, decimal_places=2, null=True)
 
     # MUSE response fields
@@ -71,7 +75,6 @@ class MuseTransactionLog(models.Model):
         db_table = 'muse_TransactionLog'
         indexes = [
             models.Index(fields=['benefit_code', 'transaction_type']),
-            models.Index(fields=['payroll_id', 'status']),
             models.Index(fields=['created_at']),
         ]
         # No soft-delete, no history — audit logs are immutable
