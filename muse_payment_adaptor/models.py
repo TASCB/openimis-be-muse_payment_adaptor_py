@@ -61,6 +61,7 @@ class MuseTransactionLog(models.Model):
     # MUSE response fields
     muse_reference = models.CharField(max_length=255, blank=True, null=True)
     http_status_code = models.IntegerField(null=True, blank=True)
+    request_body = models.TextField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
 
