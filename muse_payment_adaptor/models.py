@@ -24,8 +24,8 @@ class MuseTransactionType(models.TextChoices):
 class MuseTransactionLog(models.Model):
     """
     Audit log of every message exchanged with MUSE: one row per outbound BULK_PAYMENT
-    attempt (tasaf_payment.muse_sender) and one per inbound ACK / RESPONSE /
-    PAYMENT_STATUS (tasaf_payment.muse_inbound). Never deleted.
+    attempt (tasaf_payment.muse.sender) and one per inbound ACK / RESPONSE /
+    PAYMENT_STATUS (tasaf_payment.muse.inbound). Never deleted.
 
     References are plain strings (msg_id, batch_reference, paylist_uuid, benefit_code),
     not foreign keys, so the log stays intact whatever happens to the rows it describes.
