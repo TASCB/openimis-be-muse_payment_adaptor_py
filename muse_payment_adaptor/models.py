@@ -19,6 +19,7 @@ class MuseTransactionType(models.TextChoices):
     ACK            = 'ACK',            _('Acknowledgement')
     RESPONSE       = 'RESPONSE',       _('Batch response')
     PAYMENT_STATUS = 'PAYMENT_STATUS', _('Payment status')
+    UNAPPLIED_WITHDRAWAL = 'UNAPPLIED_WITHDRAWAL', _('Unapplied payments withdrawn')
 
 
 class MuseTransactionLog(models.Model):
